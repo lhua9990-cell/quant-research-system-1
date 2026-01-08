@@ -1,0 +1,136 @@
+{
+  "factor_feature_extract_all":[
+    "code","open","close","high","low","datetime",
+    "macd_feature_01",
+    "macd_feature_02",
+    "macd_feature_03",
+    "kd_feature_01",
+    "kd_feature_02",
+    "kd_feature_03",
+    "ema_5_10",
+    "sma_5_10",
+    "ema_10_20",
+    "sma_10_20",
+    "diff1_10",
+    "diff2_10",
+    "diff1_20",
+    "diff2_20",
+    "rsi_feature_01",
+    "rsi_feature_02",
+    "rsi_feature_03",
+    "bbands_feature_02",
+    "week",
+    "month",
+    "1st_raise_limit",
+    "hanging_man",
+    "evening_doji_star",
+    "three_black_crows",
+    "dark_cloud_cover",
+    "shooting_star",
+    "hammer",
+    "inverted_hammer",
+    "three_white_soldiers",
+    "morning_doji_star",
+    "ht_trend",
+    "ht_sine_feature",
+    "y2", "y3", "y5",
+    "predict_ynm"
+  ],
+  "predict_timeperiod": [2, 3, 5],
+  "model_params": {
+    "train_test_split": 0.2,
+    "cv_params": {
+
+      "max_depth": [3, 4, 5, 6],
+      "min_child_weight": [1, 2, 3],
+      "gamma": [0, 0.5, 1],
+      "colsample_bytree": [0.7, 0.8, 0.9],
+      "reg_lambda": [0.5, 1],
+      "reg_alpha": [0, 0.5],
+      "learning_rate": [0.1, 0.5]
+    },
+    "train_params": {
+      "learning_rate": 0.1, "max_depth": 5, "min_child_weight": 1, "seed": 0, "subsample": 0.9, "colsample_bytree": 0.9, "gamma": 5, "reg_alpha": 0.5, "reg_lambda": 0.5
+   , "objective": "binary:logistic", "eval_metric": "auc" },
+    "save_dir": "xgb_saved_models"
+  },
+ "factor_feature_extract":[
+    "macd_feature_01",
+    "macd_feature_02",
+    "macd_feature_03",
+    "kd_feature_01",
+    "kd_feature_02",
+    "kd_feature_03",
+    "sma_5_10",
+    "sma_10_20",
+    "diff1_10",
+    "diff2_10",
+    "diff1_20",
+    "diff2_20",
+    "rsi_feature_03",
+    "bbands_feature_02",
+    "week",
+    "month",
+    "ht_sine_feature",
+    "y2"
+  ],
+
+ "data": {
+		"filename": "002036.csv",
+		"columns": [
+			"y2",
+			"close_imf1",
+			"close_imf2",
+			"close_imf3",
+			"close_imf4",
+			"close_imf5",
+            "trend_strength_feature"
+		],
+		"sequence_length": 20,
+		"train_test_split": 0.8,
+		"normalise": false
+	},
+ "training": {
+		"epochs": 30,
+		"batch_size": 50
+	},
+ "model": {
+		"loss": "binary_crossentropy",
+		"optimizer": "adam",
+		"save_dir": "saved_models",
+		"layers": [
+			{
+				"type": "lstm",
+				"neurons": 100,
+				"input_timesteps": 20,
+				"input_dim": 6,
+				"return_seq": true
+			},
+			{
+				"type": "dropout",
+				"rate": 0.2
+			},
+			{
+				"type": "lstm",
+				"neurons": 100,
+				"return_seq": true
+			},
+			{
+				"type": "lstm",
+				"neurons": 100,
+				"return_seq": false
+			},
+			{
+				"type": "dropout",
+				"rate": 0.2
+			},
+			{
+				"type": "dense",
+				"neurons": 1,
+				"activation": "sigmoid"
+			}
+		]
+	}
+}
+
+
