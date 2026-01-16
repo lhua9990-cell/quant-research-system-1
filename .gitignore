@@ -1,5 +1,8 @@
 *.md
 dataset/
+system_contract/
+verification/
+tests/
 
 # Python 缓存文件
 __pycache__/
