@@ -3,6 +3,8 @@ dataset/
 system_contract/
 verification/
 tests/
+notebooks/
+data_quality/dq_feature_reports/
 
 # Python 缓存文件
 __pycache__/

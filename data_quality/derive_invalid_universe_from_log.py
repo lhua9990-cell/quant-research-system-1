@@ -75,6 +75,7 @@ def main() -> int:
         default="data_quality/suspicious_invalid_ratio_v0_1.csv",
         help="path to reference gate csv",
     )
+    # 默认门槛与 suspicious_invalid_ratio_v0_1.csv 中的 invalid_ratio 定义保持一致：invalid_ratio >= 0.01
     parser.add_argument(
         "--threshold",
         type=float,
