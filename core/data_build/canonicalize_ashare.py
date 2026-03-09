@@ -124,21 +124,26 @@ def canonicalize_ashare_df(df_raw: pd.DataFrame):
 
     df["prev_close"] = df.groupby("symbol")["close"].shift(1)
     mask_prev = df["prev_close"] > 0
-    df["ret_1d"] = np.where(mask_prev, df["close"] / df["prev_close"] - 1.0, np.nan)
-    df["logret_1d"] = np.where(mask_prev, np.log(df["close"] / df["prev_close"]), np.nan)
+    ret_1d = df["close"] / df["prev_close"] - 1.0
+    logret_1d = np.log(df["close"] / df["prev_close"])
+    df["ret_1d"] = np.where(mask_prev, np.round(ret_1d, 4), np.nan)
+    df["logret_1d"] = np.where(mask_prev, np.round(logret_1d, 4), np.nan)
 
     vol = df["volume"]
     if "amount" in df.columns:
         amt = df["amount"]
     else:
         amt = pd.Series(np.nan, index=df.index)
-    df["vwap"] = np.where((vol > 0) & amt.notna(), amt / vol, np.nan)
+    df["vwap"] = np.where((vol > 0) & amt.notna(), amt / (vol * 100.0), np.nan)
+    df["vwap"] = np.round(df["vwap"], 4)
 
-    df["hl_range"] = np.where(df["low"] > 0, df["high"] / df["low"] - 1.0, np.nan)
-    df["oc_range"] = np.where(df["open"] > 0, df["close"] / df["open"] - 1.0, np.nan)
+    hl_range = df["high"] / df["low"] - 1.0
+    oc_range = df["close"] / df["open"] - 1.0
+    df["hl_range"] = np.where(df["low"] > 0, np.round(hl_range, 4), np.nan)
+    df["oc_range"] = np.where(df["open"] > 0, np.round(oc_range, 4), np.nan)
 
     dt = df["date"]
-    df["dow"] = dt.dt.weekday
+    df["dow"] = dt.dt.weekday + 1
     df["month"] = dt.dt.month
     df["is_month_end"] = dt.dt.is_month_end
 

@@ -5,6 +5,7 @@ verification/
 tests/
 notebooks/
 data_quality/dq_feature_reports/
+data_quality/dq_canonical_reports/
 
 # Python 缓存文件
 __pycache__/

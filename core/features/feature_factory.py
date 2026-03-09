@@ -221,7 +221,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--canonical-dir",
-        default="dataset/canonical/A_stock/2016-2025",
+        default="dataset/canonical/A_stock/_exclude_negprice_qfq_2016-2025",
     )
     parser.add_argument(
         "--out-dir",

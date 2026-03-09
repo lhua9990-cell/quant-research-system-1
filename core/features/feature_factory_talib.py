@@ -29,12 +29,21 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
         "low",
         "close",
         "volume",
+        "amount",
         "vwap",
         "turnover",
+        "pct_change",
+        "change",
+        "ret_1d",
+        "logret_1d",
+        "hl_range",
+        "oc_range",
+        "amplitude",
         "dow",
         "month",
         "is_month_end",
         "days_since_listed",
+        "is_trading_day",
     ]
     missing = [c for c in required if c not in df.columns]
     if missing:
@@ -96,7 +105,6 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
     out["trn__rsi_delta__1"] = out.groupby("symbol")["ret__rsi__14"].diff(1)
     out["trn__adx_delta__1"] = out.groupby("symbol")["ret__adx__14"].diff(1)
     out["trn__bb_width_delta__1"] = out.groupby("symbol")["rng__bb_width__20"].diff(1)
-    out["liq__turnover"] = out["turnover"]
     turnover_z_all = pd.concat(turnover_z_parts).sort_index()
     out["liq__turnover_z__60"] = turnover_z_all
     vwap = out["vwap"]
@@ -106,11 +114,27 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
         (close_all - vwap) / vwap,
         np.nan,
     )
+    out["liq__turnover"] = out["turnover"] / 100.0
     out["trn__turnover_z_delta__1"] = out.groupby("symbol")["liq__turnover_z__60"].diff(1)
-    out["time__dow"] = out["dow"]
-    out["time__month"] = out["month"]
-    out["time__is_month_end"] = out["is_month_end"].astype("int64")
-    out["time__days_since_listed"] = out["days_since_listed"]
+    round_cols = [
+        "ret__roc__20",
+        "ret__roc__60",
+        "ret__rsi__14",
+        "ret__adx__14",
+        "rng__atr__14",
+        "rng__atr_z__60",
+        "rng__bb_width__20",
+        "rng__close_off__20",
+        "trn__rsi_delta__1",
+        "trn__adx_delta__1",
+        "trn__bb_width_delta__1",
+        "liq__turnover_z__60",
+        "liq__close_vwap_dev",
+        "liq__turnover",
+        "trn__turnover_z_delta__1",
+    ]
+    existing_round_cols = [c for c in round_cols if c in out.columns]
+    out[existing_round_cols] = out[existing_round_cols].round(4)
     out = out.sort_values(["symbol", "date"])
     return out
 
@@ -140,7 +164,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--canonical-dir",
-        default="dataset/canonical/A_stock/2016-2025",
+        default="dataset/canonical/A_stock/_exclude_negprice_qfq_2016-2025",
     )
     parser.add_argument(
         "--out-dir",
@@ -198,4 +222,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
