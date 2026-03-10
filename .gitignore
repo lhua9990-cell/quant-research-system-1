@@ -4,9 +4,9 @@ system_contract/
 verification/
 tests/
 notebooks/
-data_quality/dq_feature_reports/
-data_quality/dq_canonical_reports/
-
+dq/dq_feature_reports/
+dq/dq_canonical_reports/
+core/universe/data/
 # Python 缓存文件
 __pycache__/
 *.py[cod]

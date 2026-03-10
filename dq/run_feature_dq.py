@@ -63,7 +63,7 @@ def compute_time_integrity(
                     else:
                         missing_trading_days = int(gaps.sum())
                         max_gap_days = int(gaps.max())
-                        large_gap_count = int((gaps > 5).sum())
+                        large_gap_count = int((gaps > 30).sum())
         else:
             diff = d.diff().dt.days
             if diff.empty or len(d) <= 1:
@@ -79,7 +79,7 @@ def compute_time_integrity(
                 else:
                     missing_trading_days = int(sum(estimated_missing))
                     max_gap_days = int(max(estimated_missing))
-                    large_gap_count = int(sum(1 for v in estimated_missing if v > 5))
+                    large_gap_count = int(sum(1 for v in estimated_missing if v > 30))
     if "days_since_listed" in sorted_df.columns:
         dsl = sorted_df["days_since_listed"].astype(float)
         dsl_diff = dsl.diff()
@@ -380,7 +380,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--report-dir",
-        default="data_quality/dq_feature_reports",
+        default="dq/dq_feature_reports",
     )
     parser.add_argument(
         "--pipeline-stage",
@@ -407,7 +407,6 @@ def main() -> int:
     ic_values: Dict[str, List[float]] = {}
     date_min: datetime | None = None
     date_max: datetime | None = None
-    calendar_set: set[pd.Timestamp] = set()
     for path in feature_files:
         df_dates = pd.read_parquet(path, columns=["date"])
         if "date" not in df_dates.columns:
@@ -415,17 +414,22 @@ def main() -> int:
         d = pd.to_datetime(df_dates["date"]).dropna()
         if d.empty:
             continue
-        calendar_set.update(d.unique())
         d_min = d.min()
         d_max = d.max()
         if date_min is None or d_min < date_min:
             date_min = d_min
         if date_max is None or d_max > date_max:
             date_max = d_max
-    if calendar_set:
-        trading_calendar = pd.to_datetime(sorted(calendar_set))
-    else:
+    if date_min is None or date_max is None:
         trading_calendar = pd.DatetimeIndex([])
+    else:
+        from dq.calendar import load_trading_calendar
+
+        trading_calendar = load_trading_calendar(
+            date_min.strftime("%Y-%m-%d"),
+            date_max.strftime("%Y-%m-%d"),
+            exchange="XSHG",
+        )
     for path in feature_files:
         sym = path.stem
         df = pd.read_parquet(path)
@@ -482,9 +486,9 @@ def main() -> int:
         large_gap_count = ti.get("large_gap_count", 0)
         dsl_viol = ti.get("days_since_listed_violation_count", 0)
         non_trading_rows = ti.get("non_trading_day_rows", 0)
-        if max_gap > 10 or large_gap_count > 0:
+        if max_gap > 60 or large_gap_count > 0:
             tags.append("TIME_GAP_LARGE")
-        elif max_gap > 0 or dsl_viol > 0 or non_trading_rows > 0:
+        elif max_gap > 20 or dsl_viol > 0 or non_trading_rows > 0:
             tags.append("TIME_GAP_MEDIUM")
         kurt = rs.get("kurtosis", 0.0) or 0.0
         if kurt > 10.0:

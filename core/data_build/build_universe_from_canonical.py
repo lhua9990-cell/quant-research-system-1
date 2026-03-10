@@ -3,6 +3,7 @@
 #
 # Universe build rule:
 # - Use canonicalize_ashare log discard_summary to exclude any symbol with invalid_rows > 0.
+# - invalid_rows: 前复权数据拉取存在负 price 的行，当前暂不处理。
 # - Copy remaining canonical files into dataset/universe/A_stock/2016-2025.
 
 from __future__ import annotations
