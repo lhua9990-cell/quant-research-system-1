@@ -32,7 +32,17 @@ def build_universe_core(
     reason_counts: Dict[str, int] = {}
 
     for sym, metrics in symbol_metrics.items():
-        stats = extract_symbol_stats(metrics if isinstance(metrics, dict) else {})
+        metrics_dict = metrics if isinstance(metrics, dict) else {}
+        stats = extract_symbol_stats(metrics_dict)
+        returns_shape = (
+            metrics_dict.get("returns_shape", {}) if isinstance(metrics_dict, dict) else {}
+        )
+        kurtosis = returns_shape.get("kurtosis") if isinstance(returns_shape, dict) else None
+        if isinstance(kurtosis, (int, float)) and kurtosis > 20:
+            reason_counts["ret_kurtosis_gt_20"] = (
+                reason_counts.get("ret_kurtosis_gt_20", 0) + 1
+            )
+            continue
         reasons = filter_reasons(stats)
         if reasons:
             for reason in reasons:
