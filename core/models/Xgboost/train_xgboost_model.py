@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import joblib
 import pandas as pd
 import xgboost as xgb
 
@@ -45,37 +44,31 @@ def train() -> dict[str, int]:
     X_test, y_test = build_xy(test_df)
     if X_train.empty or X_valid.empty:
         raise ValueError("train/valid split has no usable rows")
-    model = xgb.XGBRegressor(
-        objective="reg:squarederror",
-        max_depth=6,
-        learning_rate=0.05,
-        n_estimators=400,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        random_state=42,
-        eval_metric=EVAL_METRIC,
-    )
-    callbacks = []
-    if EARLY_STOPPING_ROUNDS and EARLY_STOPPING_ROUNDS > 0:
-        callbacks.append(
-            xgb.callback.EarlyStopping(
-                rounds=EARLY_STOPPING_ROUNDS,
-                metric_name=EVAL_METRIC,
-                save_best=True,
-            )
-        )
-    model.fit(
-        X_train,
-        y_train,
-        eval_set=[(X_valid, y_valid)],
-        callbacks=callbacks or None,
-        verbose=True,
+    params = {
+        "objective": "reg:squarederror",
+        "max_depth": 6,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "seed": 42,
+        "eval_metric": EVAL_METRIC,
+    }
+    dtrain = xgb.DMatrix(X_train, label=y_train)
+    dvalid = xgb.DMatrix(X_valid, label=y_valid)
+    model = xgb.train(
+        params,
+        dtrain,
+        num_boost_round=400,
+        evals=[(dvalid, "valid")],
+        early_stopping_rounds=EARLY_STOPPING_ROUNDS,
+        verbose_eval=True,
     )
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, MODEL_PATH)
+    model.save_model(MODEL_PATH)
     print("model saved:", MODEL_PATH)
-    if hasattr(model, "best_iteration") and model.best_iteration is not None:
-        print("best_iteration:", model.best_iteration)
+    best_iteration = getattr(model, "best_iteration", None)
+    if best_iteration is not None:
+        print("best_iteration:", best_iteration)
     return {
         "train_rows": int(len(X_train)),
         "valid_rows": int(len(X_valid)),

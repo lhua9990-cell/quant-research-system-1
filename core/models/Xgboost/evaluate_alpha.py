@@ -80,16 +80,18 @@ def compute_daily_metrics(panel: pd.DataFrame) -> pd.DataFrame:
 def summarize_series(series: pd.Series) -> dict[str, float]:
     clean = series.replace([np.inf, -np.inf], np.nan).dropna()
     if clean.empty:
-        return {"mean": 0.0, "std": 0.0, "ir": 0.0, "win_rate": 0.0}
+        return {"mean": 0.0, "std": 0.0, "ir": 0.0, "IC_IR": 0.0, "win_rate": 0.0}
     mean = float(clean.mean())
     std = float(clean.std(ddof=0))
     ir = float(mean / std) if std > 0 else 0.0
     win_rate = float((clean > 0).mean())
-    return {"mean": mean, "std": std, "ir": ir, "win_rate": win_rate}
+    return {"mean": mean, "std": std, "ir": ir, "IC_IR": ir, "win_rate": win_rate}
 
 
 def evaluate() -> dict[str, object]:
     panel = build_eval_panel()
+    eval_start = pd.Timestamp("2024-01-01")
+    panel = panel[panel["date"] >= eval_start]
     daily = compute_daily_metrics(panel)
     report = {
         "run_meta": {
@@ -97,6 +99,7 @@ def evaluate() -> dict[str, object]:
             "row_count": int(len(panel)),
             "date_count": int(daily["date"].nunique()) if not daily.empty else 0,
             "top_quantile": float(TOP_QUANTILE),
+            "eval_start": str(eval_start.date()),
         },
         "rank_ic": summarize_series(daily["rank_ic"]) if not daily.empty else summarize_series(pd.Series(dtype=float)),
         "long_short": summarize_series(daily["long_short_return"]) if not daily.empty else summarize_series(pd.Series(dtype=float)),
@@ -115,4 +118,5 @@ def evaluate() -> dict[str, object]:
 
 
 if __name__ == "__main__":
-    raise SystemExit(evaluate())
+    evaluate()
+    raise SystemExit(0)

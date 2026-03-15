@@ -16,10 +16,10 @@ FEATURES = [
 
 INPUT_DIR = Path("dataset/trainable_universe/A_stock/2016-2025")
 OUTPUT_DATASET = Path("dataset/ml_dataset/ml_dataset.parquet")
-MODEL_PATH = Path("models/Xgboost/model_params/xgboost_alpha.model")
-PREDICT_OUTPUT = Path("models/Xgboost/alpha_predictions/alpha.parquet")
-EVAL_OUTPUT = Path("models/Xgboost/alpha_evaluation/alpha_eval.json")
-EVAL_TIMESERIES = Path("models/Xgboost/alpha_evaluation/alpha_eval_timeseries.parquet")
+MODEL_PATH = Path("core/models/Xgboost/model_params/xgboost_alpha.model")
+PREDICT_OUTPUT = Path("core/models/Xgboost/alpha_predictions/alpha.parquet")
+EVAL_OUTPUT = Path("core/models/Xgboost/alpha_evaluation/alpha_eval.json")
+EVAL_TIMESERIES = Path("core/models/Xgboost/alpha_evaluation/alpha_eval_timeseries.parquet")
 
 TRAIN_END = pd.Timestamp("2022-01-01")
 VALID_END = pd.Timestamp("2024-01-01")
