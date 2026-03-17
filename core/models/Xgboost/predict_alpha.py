@@ -4,11 +4,18 @@ import pandas as pd
 import xgboost as xgb
 
 from core.models.Xgboost.dataset_utils import load_dataset
-from core.models.Xgboost.model_config import FEATURES, MODEL_PATH, OUTPUT_DATASET, PREDICT_OUTPUT
+from core.models.Xgboost.model_config import (
+    FEATURES,
+    MODEL_PATH,
+    OUTPUT_DATASET,
+    PREDICT_OUTPUT,
+    VALID_END,
+)
 
 
 def predict() -> pd.DataFrame:
     df = load_dataset(OUTPUT_DATASET)
+    df = df[df["date"] >= VALID_END].copy()
     if not MODEL_PATH.exists():
         raise FileNotFoundError(f"model not found: {MODEL_PATH}")
     model = xgb.Booster()
@@ -17,7 +24,6 @@ def predict() -> pd.DataFrame:
     if missing:
         raise ValueError(f"dataset missing features: {missing}")
     X = df[FEATURES]
-    df = df.copy()
     dmatrix = xgb.DMatrix(X)
     best_iteration = getattr(model, "best_iteration", None)
     if best_iteration is not None:
@@ -32,4 +38,5 @@ def predict() -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    raise SystemExit(predict())
+    predict()
+    raise SystemExit(0)

@@ -20,6 +20,8 @@ MODEL_PATH = Path("core/models/Xgboost/model_params/xgboost_alpha.model")
 PREDICT_OUTPUT = Path("core/models/Xgboost/alpha_predictions/alpha.parquet")
 EVAL_OUTPUT = Path("core/models/Xgboost/alpha_evaluation/alpha_eval.json")
 EVAL_TIMESERIES = Path("core/models/Xgboost/alpha_evaluation/alpha_eval_timeseries.parquet")
+SANITY_CHECK_OUTPUT = Path("core/models/Xgboost/alpha_evaluation/sanity_check_report.json")
+SANITY_CHECK_MD = Path("core/models/Xgboost/alpha_evaluation/sanity_check_report.md")
 
 TRAIN_END = pd.Timestamp("2022-01-01")
 VALID_END = pd.Timestamp("2024-01-01")

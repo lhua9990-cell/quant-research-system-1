@@ -8,8 +8,9 @@ dq/dq_canonical_reports/
 core/universe/data/
 core/alpha_research/feature_ic_reports/
 core/models/Xgboost/alpha_predictions/
-core/models/Xgboost/alpha_evaluation/
+core/models/Xgboost/alpha_report/
 core/models/Xgboost/model_params/
+core/backtest/output/
 
 # Python 缓存文件
 __pycache__/

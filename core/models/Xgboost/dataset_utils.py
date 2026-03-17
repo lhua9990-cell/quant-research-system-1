@@ -13,7 +13,7 @@ def compute_future_return(df: pd.DataFrame, horizon: int) -> pd.DataFrame:
     out = out.sort_values("date")
     close = out["close"].astype(float)
     out["future_date"] = out["date"].shift(-horizon)
-    out["future_return"] = close.shift(-horizon) / close - 1.0
+    out["future_return"] = close.shift(-horizon) / close.shift(-1) - 1.0
     if horizon > 0:
         out = out.iloc[:-horizon]
     return out
@@ -29,9 +29,14 @@ def load_symbol_data(file_path: Path, features: list[str], horizon: int) -> pd.D
     missing = [c for c in features if c not in df.columns]
     if missing:
         raise ValueError(f"missing feature columns in {file_path}: {missing}")
+    eval_cols = ["ret_1d", "turnover", "amount", "volume"]
+    eval_missing = [c for c in eval_cols if c not in df.columns]
+    if eval_missing:
+        raise ValueError(f"missing eval columns in {file_path}: {eval_missing}")
     df["date"] = pd.to_datetime(df["date"])
     df = compute_future_return(df, horizon=horizon)
-    cols = ["date", "future_date", "symbol"] + features + ["future_return"]
+    cols = ["date", "future_date", "symbol"] + features + eval_cols + ["future_return"]
+    cols = list(dict.fromkeys(cols))
     return df[cols]
 
 
