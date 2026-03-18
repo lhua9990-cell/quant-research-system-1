@@ -1,4 +1,5 @@
 *.md
+!README.md
 dataset/
 system_contract/
 verification/
@@ -11,7 +12,8 @@ core/models/Xgboost/alpha_predictions/
 core/models/Xgboost/alpha_report/
 core/models/Xgboost/model_params/
 core/backtest/output/
-
+core/features_factory/
+core/models/Xgboost/model_config_file.py
 # Python 缓存文件
 __pycache__/
 *.py[cod]
@@ -40,4 +42,3 @@ logs/
 
 # 系统文件
 .DS_Store
-

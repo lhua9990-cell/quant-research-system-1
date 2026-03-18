@@ -7,11 +7,6 @@ import pandas as pd
 HORIZON = 20
 
 FEATURES = [
-    "liq__turnover",
-    "liq__close_vwap_dev",
-    "ret__roc__20",
-    "ret__roc__60",
-    "rng__atr__14",
 ]
 
 INPUT_DIR = Path("dataset/trainable_universe/A_stock/2016-2025")

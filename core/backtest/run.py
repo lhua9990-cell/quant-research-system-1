@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from core.backtest.stratege_report import build_stratege_report
+from core.backtest.strategy_report import build_stratege_report
 from core.models.Xgboost.model_config import INPUT_DIR, PREDICT_OUTPUT, VALID_END
 
 DAILY_OUTPUT = Path("core/backtest/output/daily_equity.parquet")
@@ -52,7 +52,8 @@ def load_market(symbols: list[str], start_date: pd.Timestamp, end_date: pd.Times
         missing = [c for c in required if c not in df.columns]
         if missing:
             raise ValueError(f"market data missing columns in {file_path}: {missing}")
-        df = df[required].copy()
+        keep_cols = required + (["rng__atr__14"] if "rng__atr__14" in df.columns else [])
+        df = df[keep_cols].copy()
         df["date"] = pd.to_datetime(df["date"])
         df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
         if not df.empty:
@@ -73,6 +74,9 @@ def run_backtest(
     limit_up_pct: float = 0.10,
     limit_down_pct: float = 0.10,
     signal_quantile: float = 0.10,
+    stop_mode: str = "fixed",
+    atr_stop_k: float = 1.0,
+    max_positions: int | None = None,
 ) -> dict[str, object]:
     alpha = load_alpha()
     signals = generate_signals(alpha, quantile=signal_quantile)
@@ -87,6 +91,7 @@ def run_backtest(
             "close": float(row["close"]),
             "volume": float(row["volume"]),
             "prev_close": float(row["prev_close"]) if pd.notna(row["prev_close"]) else np.nan,
+            "rng__atr__14": float(row["rng__atr__14"]) if "rng__atr__14" in row and pd.notna(row["rng__atr__14"]) else np.nan,
         }
 
     trading_dates = sorted(pd.to_datetime(market["date"].unique()))
@@ -159,6 +164,10 @@ def run_backtest(
                         status = "failed_existing_position"
                         shares = 0
                         trade_value = 0.0
+                    elif max_positions is not None and len(positions) >= max_positions:
+                        status = "failed_max_positions"
+                        shares = 0
+                        trade_value = 0.0
                     else:
                         cash -= trade_value
                         positions[symbol] = {
@@ -227,7 +236,18 @@ def run_backtest(
             close_price = float(row["close"])
             pos["peak_price"] = max(float(pos["peak_price"]), close_price)
             drawdown = (close_price - float(pos["peak_price"])) / float(pos["peak_price"]) if pos["peak_price"] > 0 else 0.0
-            if drawdown <= -trailing_stop_pct:
+            if stop_mode == "fixed":
+                atr = row.get("rng__atr__14", np.nan)
+                atr_stop_pct = float(atr_stop_k * atr / close_price) if np.isfinite(atr) and close_price > 0 else np.nan
+                stop_pct = min(trailing_stop_pct, atr_stop_pct) if np.isfinite(atr_stop_pct) and atr_stop_pct > 0 else trailing_stop_pct
+            elif stop_mode == "atr_ratio":
+                atr = row.get("rng__atr__14", np.nan)
+                stop_pct = float(atr_stop_k * atr / close_price) if np.isfinite(atr) and close_price > 0 else np.nan
+            else:
+                raise ValueError(f"unknown stop_mode: {stop_mode}")
+            if not np.isfinite(stop_pct) or stop_pct <= 0:
+                continue
+            if drawdown <= -stop_pct:
                 d1 = next_date.get(date)
                 if d1 is not None:
                     q = pending_orders.setdefault(d1, [])
@@ -240,7 +260,10 @@ def run_backtest(
             if d1 is not None:
                 q = pending_orders.setdefault(d1, [])
                 queued_buy = {x["symbol"] for x in q if x["side"] == "buy"}
+                position_room = None if max_positions is None else max(0, max_positions - len(positions))
                 for _, r in sig.iterrows():
+                    if position_room is not None and len(queued_buy) >= position_room:
+                        break
                     symbol = str(r["symbol"])
                     if symbol in positions or symbol in queued_buy:
                         continue
@@ -302,6 +325,9 @@ def run_backtest(
                 "limit_up_pct": limit_up_pct,
                 "limit_down_pct": limit_down_pct,
                 "signal_quantile": signal_quantile,
+                "stop_mode": stop_mode,
+                "atr_stop_k": atr_stop_k,
+                "max_positions": max_positions,
             },
         },
         "summary": build_stratege_report(daily_df, orders_df, positions_df),
